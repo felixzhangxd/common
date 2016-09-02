@@ -6,100 +6,91 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.util.StringUtils;
 
 import javax.persistence.Column;
-import javax.persistence.Entity;
 import javax.persistence.Id;
+import javax.persistence.Table;
 import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.util.LinkedList;
 import java.util.List;
 
 public abstract class AbstractDao<T extends Serializable> {
-    private Logger logger = LoggerFactory.getLogger(this.getClass());
-
+    protected Logger logger = LoggerFactory.getLogger(this.getClass());
     public abstract JdbcTemplate getJdbcTemplate();
 
-    public void save(T t) throws IllegalAccessException {
-        Entity entity = t.getClass().getAnnotation(Entity.class);
-        if (entity == null) {
-            return;
-        }
+    public int save(T t) throws IllegalAccessException {
+        Table table = t.getClass().getAnnotation(Table.class);
         List<String> columns = new LinkedList<>();
-        List<String> args = new LinkedList<>();
         List<Object> values = new LinkedList<>();
+        List<String> args = new LinkedList<>();
         for (Field field : t.getClass().getDeclaredFields()) {
             Column column = field.getAnnotation(Column.class);
             if (column == null) {
                 continue;
             }
             field.setAccessible(true);
-            if (field.get(t) != null) {
-                columns.add(column.name());
+            Object value = field.get(t);
+            if (value != null) {
+                columns.add("" + column.name() + "");
                 args.add("?");
-                values.add(field.get(t));
+                values.add(value instanceof Enum ? value.toString() : value);
             }
         }
-        String tableName = entity.name();
         String column = StringUtils.collectionToDelimitedString(columns, ",");
         String arg = StringUtils.collectionToDelimitedString(args, ",");
-        String sql = String.format("INSERT INTO %s (%s) VALUES (%s)", tableName, column, arg);
+        String sql = String.format("INSERT INTO %s.%s (%s) VALUES (%s)", table.catalog(), table.name(), column, arg);
         logger.info("{}\r\n{}", sql, values);
-        this.getJdbcTemplate().update(sql, values.toArray());
+        return this.getJdbcTemplate().update(sql, values.toArray());
     }
 
-    public void removeByPk(T t) throws IllegalAccessException {
-        Entity entity = t.getClass().getAnnotation(Entity.class);
-        if (entity == null) {
-            return;
-        }
+    public void removeById(T po) throws IllegalAccessException {
+        Table table = po.getClass().getAnnotation(Table.class);
         List<String> wheres = new LinkedList<>();
         List<Object> values = new LinkedList<>();
-        for (Field field : t.getClass().getDeclaredFields()) {
+        for (Field field : po.getClass().getDeclaredFields()) {
             Id id = field.getAnnotation(Id.class);
             if (id == null) {
                 continue;
             }
             Column column = field.getAnnotation(Column.class);
-            wheres.add(column.name() + "=?");
+            wheres.add("" + column.name() + "=?");
             field.setAccessible(true);
-            values.add(field.get(t));
+            values.add(field.get(po));
         }
-        String tableName = entity.name();
         String where = StringUtils.collectionToDelimitedString(wheres, " AND ");
-        String sql = String.format("DELETE FROM %s WHERE %s", tableName, where);
+        String sql = String.format("DELETE FROM %s.%s WHERE %s", table.catalog(), table.name(), where);
         logger.info("{}\r\n{}", sql, values);
         this.getJdbcTemplate().update(sql, values.toArray());
     }
 
-    public void modifyByPk(T t) throws IllegalAccessException {
-        Entity entity = t.getClass().getAnnotation(Entity.class);
-        if (entity == null) {
-            return;
-        }
+    public int modifyById(T po) throws IllegalAccessException {
+        Table table = po.getClass().getAnnotation(Table.class);
         List<String> columns = new LinkedList<>();
+        List<Object> columnValues = new LinkedList<>();
         List<String> wheres = new LinkedList<>();
-        List<Object> values = new LinkedList<>();
-        for (Field field : t.getClass().getDeclaredFields()) {
+        List<Object> whereValues = new LinkedList<>();
+        for (Field field : po.getClass().getDeclaredFields()) {
             Column column = field.getAnnotation(Column.class);
             if(column == null) {
                 continue;
             }
             field.setAccessible(true);
-            Object value = field.get(t);
-            if(value == null) {
+            Object value = field.get(po);
+            if (field.getAnnotation(Id.class) != null) {
+                wheres.add("" + column.name() + "=?");
+                whereValues.add(value instanceof Enum ? value.toString() : value);
                 continue;
             }
-            if (field.getAnnotation(Id.class) == null) {
-                columns.add(column.name() + "=?");
-            }else {
-                wheres.add(column.name() + "=?");
+            if(value != null){
+                columns.add("" + column.name() + "=?");
+                columnValues.add(value instanceof Enum ? value.toString() : value);
             }
-            values.add(value);
         }
-        String tableName = entity.name();
         String column = StringUtils.collectionToDelimitedString(columns, ",");
         String where = StringUtils.collectionToDelimitedString(wheres, " AND ");
-        String sql = String.format("UPDATE %s SET %s WHERE %s", tableName, column, where);
-        logger.info("{}\r\n{}", sql, values);
-        this.getJdbcTemplate().update(sql, values.toArray());
+        String sql = String.format("UPDATE %s.%s SET %s WHERE %s", table.catalog(), table.name(), column, where);
+        columnValues.addAll(whereValues);
+        logger.info("{}\r\n{}", sql, columnValues);
+        return this.getJdbcTemplate().update(sql, columnValues.toArray());
     }
+
 }
