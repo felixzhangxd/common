@@ -24,10 +24,10 @@ public class TwitterSnowFlake {
     }
 
     public TwitterSnowFlake(long worker) {
+    	logger.info("TwitterSnowFlake's worker is {}.", worker);
         if(worker < 0x0L || 0x3FFL < worker ) {
             throw new IllegalArgumentException("worker Id can't be less than 0 or greater than " + 0x3FFL);
         }
-        logger.info("TwitterSnowFlake's worker is {}.", worker);
         this.timestamp = System.currentTimeMillis();
         this.worker = worker;
         this.sequence = 0L;
