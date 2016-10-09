@@ -18,7 +18,7 @@ import java.util.List;
  * @author felix
  */
 public abstract class AbstractDao<T extends Serializable> {
-    protected Logger logger = LoggerFactory.getLogger("sql");
+    protected Logger logger = LoggerFactory.getLogger(this.getClass());
     public abstract JdbcTemplate getJdbcTemplate();
 
     public int save(T t) throws IllegalAccessException {
@@ -56,7 +56,7 @@ public abstract class AbstractDao<T extends Serializable> {
                 continue;
             }
             Column column = field.getAnnotation(Column.class);
-            wheres.add("" + column.name() + "=?");
+            wheres.add(column.name() + "=?");
             field.setAccessible(true);
             values.add(field.get(po));
         }

@@ -7,9 +7,14 @@ import org.springframework.util.StringUtils;
 import java.util.LinkedList;
 import java.util.List;
 
+/**
+ * sql生成器
+ * 
+ * @author felix
+ */
 public class SelectSqlBuilder {
 	private List<String> columns;
-	private List<String> tables;
+	private String table;
 	private List<String> wheres;
 	private List<String> groups;
 	private List<String> havings;
@@ -23,11 +28,8 @@ public class SelectSqlBuilder {
         columns.add(expression);
 	}
 	
-	public void addTable(String table) {
-        if(this.tables == null) {
-            this.tables = new LinkedList<>();
-        }
-        tables.add(table);
+	public void setTable(String table) {
+        this.table = table;
 	}
 	
 	public void addWhere(String expression, Object value, List<Object> values) {
@@ -56,6 +58,9 @@ public class SelectSqlBuilder {
     }
 
     public void addOrder(String column, String sort) {
+        if(StringUtils.isEmpty(column)) {
+            return;
+        }
         if(this.orders == null) {
             this.orders = new LinkedList<>();
         }
@@ -71,7 +76,7 @@ public class SelectSqlBuilder {
         StringBuilder sql = new StringBuilder(256);
         sql.append("SELECT ");
         sql.append(this.columns == null ? "*" : StringUtils.collectionToDelimitedString(this.columns, ","));
-        sql.append(" FROM ").append(StringUtils.collectionToDelimitedString(this.tables, ","));
+        sql.append(" FROM ").append(this.table);
         if(wheres != null) {
             sql.append(" WHERE ").append(StringUtils.collectionToDelimitedString(this.wheres, " AND "));
         }
