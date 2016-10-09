@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.0.xsd"
+  default-lazy-init="true">
+
+  <description>Shiro安全配置</description>
+  
+  <!-- 保证实现了Shiro内部lifecycle函数的bean执行 -->
+  <bean id="lifecycleBeanPostProcessor" class="org.apache.shiro.spring.LifecycleBeanPostProcessor" />
+  <!-- 支持 Shiro对Controller的方法级AOP安全控制 begin -->
+  <bean class="org.springframework.aop.framework.autoproxy.DefaultAdvisorAutoProxyCreator" depends-on="lifecycleBeanPostProcessor">
+    <property name="proxyTargetClass" value="true" />
+  </bean>
+  <bean class="org.apache.shiro.spring.security.interceptor.AuthorizationAttributeSourceAdvisor">
+    <property name="securityManager" ref="securityManager" />
+  </bean>
+  
+  <!-- Shiro Filter -->
+  <bean id="shiroFilter" class="org.apache.shiro.spring.web.ShiroFilterFactoryBean">
+    <property name="securityManager" ref="securityManager" />
+    <property name="loginUrl" value="/login" />
+    <property name="successUrl" value="/common/welcome" />
+    <property name="unauthorizedUrl" value="/login/noauth" />
+    <property name="filters">
+      <map>
+        <entry key="authc">
+          <!-- 自定义验证拦截过滤器 -->
+          <bean class="com.hxzxg.crm.api.service.shiro.AuthenticationFilter" />
+        </entry>
+      </map>
+    </property>
+    <property name="filterChainDefinitions">
+      <value>
+        /login = authc
+        /logout = logout
+        /static/** = anon
+        /api/**= anon
+        /worksite-management/handle-data-hxzxg**=anon
+        /auth/users/to-pwd-modal/** = authc
+        /auth/users/change-pwd/** = authc
+        /auth/** = roles[admin]
+        /** = authc
+      </value>
+    </property>
+  </bean>
+
+  <bean id="securityManager" class="org.apache.shiro.web.mgt.DefaultWebSecurityManager">
+    <property name="realm" ref="shiroRealm" />
+    <property name="cacheManager" ref="shiroEhcacheManager" />
+  </bean>
+
+  <!-- 项目自定义的Realm, 所有userService依赖的dao都需要用depends-on声明 -->
+  <bean id="shiroRealm" class="com.hxzxg.crm.api.service.shiro.ShiroRealm">
+    <property name="usersService" ref="usersService" />
+  </bean>
+
+  <!-- 用户授权信息Cache, 采用EhCache -->
+  <bean id="shiroEhcacheManager" class="org.apache.shiro.cache.ehcache.EhCacheManager">
+    <property name="cacheManagerConfigFile" value="classpath:ehcache/ehcache-shiro.xml" />
+  </bean>
+</beans>

@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:aop="http://www.springframework.org/schema/aop" xmlns:tx="http://www.springframework.org/schema/tx" xmlns:context="http://www.springframework.org/schema/context" xmlns:mvc="http://www.springframework.org/schema/mvc" xsi:schemaLocation="
+    http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.1.xsd
+    http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.1.xsd
+    http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.1.xsd
+    http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.1.xsd
+    http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-4.1.xsd">
+
+  <!-- Spring 4.1.6 需要org.quartz-scheduler quartz 2.2.1 以及Spring-context-support 4.1.6 -->
+
+  <!--要调度的对象，调用reportQuartzService的execute()方法 -->
+  <bean id="reportQuartzService" class="com.hxzxg.crm.api.service.ReportQuartzService" />
+  <bean id="reportQuartzServiceDetail" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+    <property name="targetObject" ref="reportQuartzService" />
+    <property name="targetMethod" value="execute" />
+    <!--将并发设置为false -->
+    <property name="concurrent" value="false" />
+  </bean>
+
+  <!-- 调度触发器，用于设置调用规则 -->
+  <bean id="reportQuartzServiceTrigger" class="org.springframework.scheduling.quartz.CronTriggerFactoryBean">
+    <property name="jobDetail" ref="reportQuartzServiceDetail" />
+    <!--corn表达式，每天1点整运行一次 "0 0 1 * * ?" 每30秒运行一次（测试用）"0/30 * * * * ?" -->
+    <property name="cronExpression" value="0 0 1 * * ?" />
+  </bean>
+
+  <!-- 排版表每周清空排班数任务 -->
+  <bean id="customerServiceDetail" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+    <property name="targetObject" ref="customerService" />
+    <property name="targetMethod" value="clearTodayCount" />
+    <!--将并发设置为false -->
+    <property name="concurrent" value="false" />
+  </bean>
+  <!-- 调度触发器，用于设置调用规则 -->
+  <bean id="customerServiceTrigger" class="org.springframework.scheduling.quartz.CronTriggerFactoryBean">
+    <property name="jobDetail" ref="customerServiceDetail" />
+    <!--corn表达式，每周星期天23：59：59实行一次 -->
+    <property name="cronExpression" value="59 59 23 ? * SUN" />
+  </bean>
+
+
+
+  <!--释放冻结金额触发器 start -->
+  <bean id="orderMoneyReleaseService" class="com.hxzxg.crm.api.service.order.OrderMoneyReleaseService" />
+  <bean id="releaseQuartzServiceDetail" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+    <property name="targetObject" ref="orderMoneyReleaseService" />
+    <property name="targetMethod" value="moneyRelease" />
+    <!--将并发设置为false -->
+    <property name="concurrent" value="false" />
+  </bean>
+  <!-- 调度触发器，用于设置调用规则 -->
+  <bean id="moneyReleaseTrigger" class="org.springframework.scheduling.quartz.CronTriggerFactoryBean">
+    <property name="jobDetail" ref="releaseQuartzServiceDetail" />
+    <!--corn表达式，每天1点整运行一次 "0 0 1 * * ?" 每30秒运行一次（测试用）"0/30 * * * * ?" -->
+    <property name="cronExpression" value="0/30 * * * * ?" />
+  </bean>
+  <!-- 释放冻结金额 end -->
+
+
+
+  <!-- 调度入口，lazy-init="false" spring容器启动时便初始化 -->
+  <bean id="startQuartz" class="org.springframework.scheduling.quartz.SchedulerFactoryBean" lazy-init="false">
+    <property name="triggers">
+      <list>
+        <!--作业调度器,list下可加入其他的调度器 -->
+        <ref bean="reportQuartzServiceTrigger" />
+        <!-- 排版表每周清空排班数任务 -->
+        <ref bean="customerServiceTrigger" />
+        <!-- 每日释放冻结金额 触发器 -->
+        <ref bean="moneyReleaseTrigger" />
+      </list>
+    </property>
+  </bean>
+
+
+</beans>

@@ -13,8 +13,12 @@ import java.lang.reflect.Field;
 import java.util.LinkedList;
 import java.util.List;
 
+/**
+ * 
+ * @author felix
+ */
 public abstract class AbstractDao<T extends Serializable> {
-    protected Logger logger = LoggerFactory.getLogger(this.getClass());
+    protected Logger logger = LoggerFactory.getLogger("sql");
     public abstract JdbcTemplate getJdbcTemplate();
 
     public int save(T t) throws IllegalAccessException {
