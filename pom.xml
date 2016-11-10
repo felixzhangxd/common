@@ -15,5 +15,6 @@
         <module>common-bean</module>
         <module>common-jdbc</module>
         <module>common-mvc</module>
+        <module>common-tag</module>
     </modules>
 </project>
