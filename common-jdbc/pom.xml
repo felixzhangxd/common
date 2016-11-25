@@ -5,14 +5,14 @@
         <groupId>com.firebugsoft</groupId>
         <artifactId>common</artifactId>
         <version>1.0.0-SNAPSHOT</version>
+        <relativePath>..</relativePath>
     </parent>
-
     <artifactId>common-jdbc</artifactId>
     <dependencies>
         <dependency>
             <artifactId>common-bean</artifactId>
             <groupId>com.firebugsoft</groupId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>

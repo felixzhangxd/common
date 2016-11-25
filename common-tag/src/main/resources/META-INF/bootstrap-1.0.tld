@@ -10,7 +10,7 @@
     <uri>http://www.firebugsoft.com/tag/bootstrap</uri>
 
     <tag>
-        <name>pg</name>
+        <name>page</name>
         <tag-class>com.firebugsoft.common.tag.bootstrap.PageTag</tag-class>
         <body-content>empty</body-content>
         <attribute>
