@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:tx="http://www.springframework.org/schema/tx" xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="
+	http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.2.xsd
+	http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.2.xsd
+	http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.2.xsd
+	http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.2.xsd">
+
+	<context:component-scan base-package="com.firebugsoft.common.jdbc" />
+		
+	<bean id="jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate">
+		<property name="dataSource" ref="dynamicDataSource" />
+	</bean>
+	
+	<bean id="dynamicDataSource" class="com.firebugsoft.common.jdbc.datasource.DynamicDataSource">
+		<property name="targetDataSources">
+			<map key-type="java.lang.String">
+				<entry key="master" value-ref="masterDataSource" />
+				<entry key="slave" value-ref="slaveDataSource" />
+			</map>
+		</property>
+		<property name="masterDataSource" ref="masterDataSource" />
+		<property name="slaveDataSource" ref="slaveDataSource" />
+	</bean>
+	
+	
+	<bean id="masterDataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource" destroy-method="close">
+		<property name="driverClass" value="com.mysql.jdbc.Driver" />
+		<property name="jdbcUrl"     value="jdbc:mysql://192.168.0.201:3306/test?useUnicode=true&amp;characterEncoding=UTF-8" />
+		<property name="user"        value="master" />
+		<property name="password"    value="master" />
+	</bean>
+	
+	<bean id="slaveDataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource" destroy-method="close">
+		<property name="driverClass" value="com.mysql.jdbc.Driver" />
+		<property name="jdbcUrl"     value="jdbc:mysql://192.168.0.202:3306/test?useUnicode=true&amp;characterEncoding=UTF-8" />
+		<property name="user"        value="slave" />
+		<property name="password"    value="slave" />
+	</bean>
+	
+	<!-- 动态数据源事务管理器 -->
+	<bean id="transactionManager" class="com.firebugsoft.common.jdbc.datasource.DynamicDataSourceTransactionManager">
+		<property name="dataSource" ref="dynamicDataSource" />
+	</bean>
+	
+	<!-- 以 @Transactional 标注来定义事务 -->
+	<tx:annotation-driven transaction-manager="transactionManager" proxy-target-class="true" />
+	
+	<!-- 配置事务的传播特性 -->
+	<tx:advice id="txAdvice" transaction-manager="transactionManager">
+		<tx:attributes>
+			<tx:method name="*save*"   propagation="REQUIRED" read-only="false" rollback-for="Exception" />
+			<tx:method name="*remove*" propagation="REQUIRED" read-only="false" rollback-for="Exception" />
+			<tx:method name="*modify*" propagation="REQUIRED" read-only="false" rollback-for="Exception" />
+			<tx:method name="*find*"   read-only="true" />
+		</tx:attributes>
+	</tx:advice>
+	<!-- 那些类的哪些方法参与事务 -->
+	<aop:config>
+		<aop:pointcut id="allManagerMethod" expression="execution(* com.firebugsoft.*Dao.*(..))" />
+		<aop:advisor pointcut-ref="allManagerMethod" advice-ref="txAdvice" />
+	</aop:config>
+</beans>	
