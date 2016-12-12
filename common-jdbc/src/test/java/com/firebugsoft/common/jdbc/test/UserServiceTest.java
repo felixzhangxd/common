@@ -12,13 +12,14 @@ import com.firebugsoft.common.jdbc.po.UserPo;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(locations = "classpath:spring/applicationContext-*.xml")
-public class UserDaoTest {
+public class UserServiceTest {
 	@Resource
 	private UserDao userDao;
 	
 	@Test
 	public void findById() {
 		Integer id=1;
+		System.out.println(userDao.findById(id).getName());
 		System.out.println(userDao.findById(id).getName());
 //		System.out.println(po.getName());
 //		userDao.findById(1);
