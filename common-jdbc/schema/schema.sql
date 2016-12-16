@@ -7,6 +7,7 @@ ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 #master
 grant insert,delete,update,select on *.* to 'master'@'%' identified by 'master';
+truncate table t_user;
 insert into t_user (name) values('master');
 
 #slave

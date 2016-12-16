@@ -21,43 +21,43 @@ import com.firebugsoft.common.jdbc.po.UserPo;
 
 @Repository
 public class UserDao {
-	private Logger logger = LoggerFactory.getLogger("sql");
-	private RowMapper<UserPo> mapper = BeanPropertyRowMapper.newInstance(UserPo.class);
-	@Resource
-	private JdbcTemplate jdbcTemplate;
+    private Logger            logger = LoggerFactory.getLogger("sql");
+    private RowMapper<UserPo> mapper = BeanPropertyRowMapper.newInstance(UserPo.class);
+    @Resource
+    private JdbcTemplate      jdbcTemplate;
 
-	public void save(final UserPo po) {
-		KeyHolder keyHolder = new GeneratedKeyHolder();
-		jdbcTemplate.update(new PreparedStatementCreator() {
-			public PreparedStatement createPreparedStatement(Connection connection) throws SQLException {
-				String sql = "insert into t_user (name) values(?)";
-				logger.info("{}; {}", sql, po);
-				PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
-				ps.setString(1, po.getName());
-				return ps;
-			}
-		}, keyHolder);
-		po.setId(keyHolder.getKey().intValue());
-	}
+    public void save(final UserPo po) {
+        KeyHolder keyHolder = new GeneratedKeyHolder();
+        jdbcTemplate.update(new PreparedStatementCreator() {
+            public PreparedStatement createPreparedStatement(Connection connection) throws SQLException {
+                String sql = "insert into t_user (name) values(?)";
+                logger.info("{}; {}", sql, po);
+                PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+                ps.setString(1, po.getName());
+                return ps;
+            }
+        }, keyHolder);
+        po.setId(keyHolder.getKey().intValue());
+    }
 
-	public int removeById(Integer id) {
-		String sql = "delete from t_user where id=?";
-		Object[] args = new Object[] { id};
-		logger.info("{}; {}", sql, args);
-		return jdbcTemplate.update(sql, args);
-	}
+    public int removeById(Integer id) {
+        String sql = "delete from t_user where id=?";
+        Object[] args = new Object[] { id };
+        logger.info("{}; {}", sql, args);
+        return jdbcTemplate.update(sql, args);
+    }
 
-	public int modifyById(UserPo po) {
-		String sql = "update t_user set name=? where id=?";
-		Object[] args = new Object[] {po.getName(), po.getId()};
-		logger.info("{}; {}", sql, args);
-		return jdbcTemplate.update(sql, args);
-	}
+    public int modifyById(UserPo po) {
+        String sql = "update t_user set name=? where id=?";
+        Object[] args = new Object[] { po.getName(), po.getId() };
+        logger.info("{}; {}", sql, args);
+        return jdbcTemplate.update(sql, args);
+    }
 
-	public UserPo findById(Integer id) {
-		String sql = "select id,name from t_user where id=?";
-		Object[] args = new Object[] {id};
-		logger.info("{}; {}", sql, args);
-		return jdbcTemplate.queryForObject(sql, args, mapper);
-	}
+    public UserPo findById(Integer id) {
+        String sql = "select id,name from t_user where id=?";
+        Object[] args = new Object[] { id };
+        logger.info("{}; {}", sql, args);
+        return jdbcTemplate.queryForObject(sql, args, mapper);
+    }
 }
