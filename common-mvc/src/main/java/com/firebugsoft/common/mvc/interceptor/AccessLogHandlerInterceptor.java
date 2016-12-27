@@ -16,7 +16,7 @@ import org.springframework.web.servlet.ModelAndView;
  * @author felix
  */
 public class AccessLogHandlerInterceptor implements HandlerInterceptor {
-    private Logger logger = LoggerFactory.getLogger(this.getClass());
+    private Logger logger = LoggerFactory.getLogger("access");
 
     /**
      * 记入http访问日志
